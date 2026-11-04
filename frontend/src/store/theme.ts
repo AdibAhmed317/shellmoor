@@ -1,26 +1,21 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { applyTheme, themeById, themes, type Theme } from '../themes';
+import { applyTheme, themeById, type Theme } from '../themes';
 
 type ThemeState = {
   themeId: string;
-  previewId: string | null; // hovered in the picker, not saved
+  previewId: string | null; // hovered in settings or highlighted in the palette, not saved
   setTheme: (id: string) => void;
   setPreview: (id: string | null) => void;
-  cycle: (step: number) => void;
 };
 
 export const useTheme = create<ThemeState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       themeId: 'shellmoor',
       previewId: null,
       setTheme: (themeId) => set({ themeId, previewId: null }),
       setPreview: (previewId) => set({ previewId }),
-      cycle: (step) => {
-        const i = themes.findIndex((t) => t.id === get().themeId);
-        set({ themeId: themes[(i + step + themes.length) % themes.length].id, previewId: null });
-      },
     }),
     { name: 'shellmoor-theme', partialize: (s) => ({ themeId: s.themeId }) },
   ),

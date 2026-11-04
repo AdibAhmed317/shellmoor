@@ -107,8 +107,15 @@ export const themeById = (id: string) => themes.find((t) => t.id === id) ?? them
 // Overrides the Tailwind @theme tokens in style.css, so every bg-*/text-*/border-* class follows.
 export function applyTheme(t: Theme) {
   const s = document.documentElement.style;
-  for (const k of ['bg', 'surface', 'border', 'text', 'muted', 'accent'] as const) s.setProperty(`--color-${k}`, t[k]);
+  // Hairlines are derived from text in style.css, so the theme's own border colour is only used by the terminal.
+  for (const k of ['bg', 'surface', 'text', 'muted', 'accent'] as const) s.setProperty(`--color-${k}`, t[k]);
+  // Status colours and the wallpaper tint come from the theme's ANSI palette so they suit every theme.
+  s.setProperty('--color-danger', t.ansi[9]);
+  s.setProperty('--color-warning', t.ansi[3]);
+  s.setProperty('--color-success', t.ansi[2]);
+  s.setProperty('--color-tint', t.ansi[4]);
   s.colorScheme = t.type;
+  document.documentElement.dataset.scheme = t.type;
 }
 
 const ansiKeys = ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white'];

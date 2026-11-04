@@ -1,13 +1,56 @@
 @import 'tailwindcss';
 
-/* Dark theme with a restrained mint accent. Use as bg-bg, text-accent, border-border, etc. */
+/* `dark:` follows the active theme's scheme (set by applyTheme), not the OS. */
+@custom-variant dark (&:where([data-scheme='dark'], [data-scheme='dark'] *));
+
+/*
+  Design tokens. Defaults are the Shellmoor theme; themes.ts overrides the colour ones at runtime,
+  so every bg-*, text-*, border-* class follows the active theme.
+  Hairlines (border) and hover/selection fills are translucent text, Apple-style, so they suit light and dark.
+*/
 @theme {
   --color-bg: #0e1013;
   --color-surface: #15181d;
-  --color-border: #262a31;
   --color-text: #d8dde4;
   --color-muted: #7d8590;
   --color-accent: #5fd4b0;
+  --color-tint: #61afef; /* second wallpaper tint */
+  --color-danger: #e06c75;
+  --color-warning: #e5c07b;
+  --color-success: #5fd4b0;
+  --color-border: color-mix(in oklab, var(--color-text) 11%, transparent);
+
+  --font-sans: 'Inter Variable', -apple-system, 'SF Pro Text', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', 'SF Mono', Consolas, monospace;
+
+  --animate-pop: pop 220ms cubic-bezier(0.2, 0.9, 0.25, 1.15);
+  --animate-fade: fade 160ms ease-out;
+  @keyframes pop {
+    from { opacity: 0; transform: scale(0.96) translateY(-6px); }
+  }
+  @keyframes fade {
+    from { opacity: 0; }
+  }
+}
+
+/* Translucent material for floating chrome (sidebar, toolbar groups, sheets). */
+@utility glass {
+  background: color-mix(in oklab, var(--glass-base) 70%, transparent);
+  backdrop-filter: blur(28px) saturate(170%);
+  border: 1px solid color-mix(in oklab, var(--color-text) 9%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, white 7%, transparent),
+    0 1px 2px rgb(0 0 0 / 0.12),
+    0 12px 32px -8px rgb(0 0 0 / 0.35);
+}
+
+/* Content cards (panes). */
+@utility card {
+  background: var(--color-bg);
+  border: 1px solid color-mix(in oklab, var(--color-text) 8%, transparent);
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.14),
+    0 10px 30px -14px rgb(0 0 0 / 0.45);
 }
 
 html,
@@ -16,6 +59,78 @@ body,
   margin: 0;
   height: 100%;
   overflow: hidden;
-  background-color: var(--color-bg);
-  font-family: 'Segoe UI', system-ui, sans-serif;
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  letter-spacing: -0.006em;
+  font-feature-settings: 'cv11', 'ss03'; /* Inter: single-storey a, rounder forms closer to SF */
+  -webkit-font-smoothing: antialiased;
+  user-select: none; /* app chrome, not a document; inputs and editors opt back in */
+}
+
+/* Glass is a touch lighter than the window in dark themes (as macOS sidebars are), plain surface in light ones. */
+:root {
+  --glass-base: var(--color-surface);
+}
+[data-scheme='dark'] {
+  --glass-base: color-mix(in oklab, var(--color-surface), white 7%);
+}
+
+/* A theme-tinted "wallpaper" behind the glass, like macOS desktop tinting. */
+body {
+  background:
+    radial-gradient(1200px 800px at -10% -25%, color-mix(in oklab, var(--color-accent) 26%, transparent), transparent 65%),
+    radial-gradient(1000px 800px at 110% 125%, color-mix(in oklab, var(--color-tint) 24%, transparent), transparent 62%),
+    var(--color-surface);
+}
+
+/* Text fields draw their own focus ring. */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
+}
+
+input,
+textarea,
+pre,
+.xterm,
+.monaco-editor {
+  user-select: text;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--color-accent) 35%, transparent);
+}
+
+:focus-visible {
+  outline: 3px solid color-mix(in oklab, var(--color-accent) 45%, transparent);
+  outline-offset: 1px;
+}
+
+/* Rendered Markdown (editor preview). */
+.markdown {
+  line-height: 1.65;
+  user-select: text;
+  & h1 { font-size: 1.75em; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 0.6em; }
+  & h2 { font-size: 1.3em; font-weight: 650; margin: 1.4em 0 0.5em; padding-bottom: 0.25em; border-bottom: 1px solid var(--color-border); }
+  & h3 { font-size: 1.1em; font-weight: 600; margin: 1.2em 0 0.4em; }
+  & p, & ul, & ol, & table, & pre, & blockquote { margin: 0 0 0.9em; }
+  & ul { list-style: disc; padding-left: 1.4em; }
+  & ol { list-style: decimal; padding-left: 1.4em; }
+  & a { color: var(--color-accent); text-decoration: underline; text-underline-offset: 2px; }
+  & code { font-family: var(--font-mono); font-size: 0.88em; padding: 0.1em 0.35em; border-radius: 4px; background: color-mix(in oklab, var(--color-text) 9%, transparent); }
+  & pre { padding: 0.8em 1em; border-radius: 8px; overflow-x: auto; background: color-mix(in oklab, var(--color-text) 6%, transparent); }
+  & pre code { padding: 0; background: none; }
+  & blockquote { padding-left: 1em; border-left: 3px solid var(--color-accent); color: var(--color-muted); }
+  & table { border-collapse: collapse; }
+  & th, & td { padding: 0.35em 0.8em; border: 1px solid var(--color-border); text-align: left; }
+  & th { font-weight: 600; background: color-mix(in oklab, var(--color-text) 5%, transparent); }
+  & img { max-width: 100%; }
+}
+
+/* Thin overlay-style scrollbars. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--color-text) 20%, transparent) transparent;
 }
